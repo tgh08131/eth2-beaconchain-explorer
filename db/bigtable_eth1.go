@@ -696,10 +696,13 @@ func (bigtable *Bigtable) IndexEventsWithTransformers(start, end int64, transfor
 				subG.Go(func() error {
 					bulkMutsData := types.BulkMutations{}
 					bulkMutsMetadataUpdate := types.BulkMutations{}
-					for _, transform := range transforms {
+					for transformI, transform := range transforms {
 						mutsData, mutsMetadataUpdate, err := transform(block, cache)
 						if err != nil {
 							logrus.WithError(err).Errorf("error transforming block [%v]", block.Number)
+						}
+						if mutsData == nil {
+							return fmt.Errorf("error transforming block [%v], transformer %v returned nil mutsData", transformI, block.Number)
 						}
 						bulkMutsData.Keys = append(bulkMutsData.Keys, mutsData.Keys...)
 						bulkMutsData.Muts = append(bulkMutsData.Muts, mutsData.Muts...)
